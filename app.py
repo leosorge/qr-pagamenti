@@ -36,7 +36,18 @@ def analizza(testo):
             ],
             temperature=0.1,
         )
-        return json.loads(res.choices[0].message.content.strip())
+        content = res.choices[0].message.content.strip()
+        # Strip markdown code fences (```json ... ``` or ``` ... ```)
+        if content.startswith("```"):
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+            content = content.strip()
+        return json.loads(content)
+    except json.JSONDecodeError:
+        raw = res.choices[0].message.content if res else "nessuna risposta"
+        st.error(f"Risposta non valida dal modello:\n{raw[:300]}")
+        return None
     except Exception as e:
         st.error(f"Errore: {e}")
         return None
