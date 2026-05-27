@@ -37,6 +37,8 @@ def analizza(testo):
             temperature=0.1,
         )
         content = res.choices[0].message.content.strip()
+        with st.expander("Debug risposta modello"):
+            st.code(content)
         # Strip markdown code fences (```json ... ``` or ``` ... ```)
         if content.startswith("```"):
             content = content.split("```")[1]
@@ -49,7 +51,7 @@ def analizza(testo):
         st.error(f"Risposta non valida dal modello:\n{raw[:300]}")
         return None
     except Exception as e:
-        st.error(f"Errore: {e}")
+        st.error(f"Errore API: {type(e).__name__}: {e}")
         return None
 
 
