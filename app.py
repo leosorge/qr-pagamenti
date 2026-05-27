@@ -16,9 +16,13 @@ client = OpenAI(base_url="https://api.regolo.ai/v1", api_key=key) if key else No
 
 PROMPT_SISTEMA = (
     "Sei un esperto contabile. Analizza l'email e genera un JSON rigoroso con questi campi: "
-    "tipo_pagamento (bonifico_sepa, bollettino_postale, postepay_standard, postepay_evolution), "
-    "beneficiario, importo (float), causale, iban, numero_conto_corrente_postale, "
-    "codice_bollettino, numero_carta_postepay, codice_fiscale_destinatario. "
+    "tipo_pagamento (cbill, bollettino_postale, postepay_standard, postepay_evolution), "
+    "beneficiario, importo (float), causale, iban, "
+    "codice_ente (codice fiscale o partita IVA del creditore), "
+    "codice_avviso (numero avviso pagamento, tipicamente 18 cifre), "
+    "numero_conto_corrente_postale, codice_bollettino, "
+    "numero_carta_postepay, codice_fiscale_destinatario. "
+    "Usa cbill per bonifici SEPA e avvisi di pagamento bancari italiani. "
     "Se un dato manca, usa null. Non aggiungere commenti, solo JSON."
 )
 
@@ -57,8 +61,15 @@ def gen_qr(dati):
     t = dati["tipo_pagamento"]
     i = float(dati.get("importo") or 0)
 
-    if t in ["bonifico_sepa", "postepay_evolution"]:
-        # Formato EPC/GiroCode per SEPA
+    if t == "cbill":
+        # Formato CBILL (standard CBI italiano)
+        codice_ente = dati.get("codice_ente") or ""
+        codice_avviso = dati.get("codice_avviso") or (dati.get("iban") or "").replace(" ", "")
+        importo_centesimi = int(round(i * 100))
+        cf_debitore = dati.get("codice_fiscale_destinatario") or ""
+        data = f"CBILL|001|{codice_ente}|{codice_avviso}|{importo_centesimi:013d}|{cf_debitore}"
+    elif t == "postepay_evolution":
+        # Formato EPC/GiroCode per Postepay Evolution (carta con IBAN)
         data = (
             f"BCD\n002\n1\nSCT\n\n"
             f"{dati.get('beneficiario', '')}\n"
@@ -104,6 +115,9 @@ if "dati" in st.session_state:
     d["iban"] = st.text_input("IBAN", d.get("iban") or "")
     d["importo"] = st.number_input("Importo", value=float(d.get("importo") or 0))
     d["causale"] = st.text_input("Causale", d.get("causale") or "")
+    if d.get("tipo_pagamento") == "cbill":
+        d["codice_ente"] = st.text_input("Codice Ente (CF/PIVA creditore)", d.get("codice_ente") or "")
+        d["codice_avviso"] = st.text_input("Codice Avviso", d.get("codice_avviso") or "")
 
     if st.button("Genera QR Code"):
         st.image(gen_qr(d), use_container_width=True)
