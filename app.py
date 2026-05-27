@@ -61,22 +61,13 @@ def gen_qr(dati):
     t = dati["tipo_pagamento"]
     i = float(dati.get("importo") or 0)
 
-    if t == "cbill":
-        # Formato CBILL (standard CBI italiano)
+    if t in ("cbill", "bonifico_sepa", "postepay_evolution"):
+        # Formato CBILL (standard CBI italiano) per tutti i pagamenti bancari
         codice_ente = dati.get("codice_ente") or ""
         codice_avviso = dati.get("codice_avviso") or (dati.get("iban") or "").replace(" ", "")
         importo_centesimi = int(round(i * 100))
         cf_debitore = dati.get("codice_fiscale_destinatario") or ""
         data = f"CBILL|001|{codice_ente}|{codice_avviso}|{importo_centesimi:013d}|{cf_debitore}"
-    elif t == "postepay_evolution":
-        # Formato EPC/GiroCode per Postepay Evolution (carta con IBAN)
-        data = (
-            f"BCD\n002\n1\nSCT\n\n"
-            f"{dati.get('beneficiario', '')}\n"
-            f"{(dati.get('iban') or '').replace(' ', '')}\n"
-            f"EUR{i:.2f}\n\n\n"
-            f"{dati.get('causale', '')}\n"
-        )
     elif t == "bollettino_postale":
         data = (
             f"<{dati.get('numero_conto_corrente_postale', '')}>"
