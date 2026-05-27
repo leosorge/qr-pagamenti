@@ -29,7 +29,7 @@ def analizza(testo):
         return None
     try:
         res = client.chat.completions.create(
-            model="llama-3-70b-instruct",
+            model="Llama-3.3-70B-Instruct",
             messages=[
                 {"role": "system", "content": PROMPT_SISTEMA},
                 {"role": "user", "content": testo},
