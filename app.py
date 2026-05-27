@@ -37,8 +37,6 @@ def analizza(testo):
             temperature=0.1,
         )
         content = res.choices[0].message.content.strip()
-        with st.expander("Debug risposta modello"):
-            st.code(content)
         # Strip markdown code fences (```json ... ``` or ``` ... ```)
         if content.startswith("```"):
             content = content.split("```")[1]
@@ -103,6 +101,7 @@ if "dati" in st.session_state:
     d = st.session_state["dati"]
     st.subheader("Verifica Dati")
     d["beneficiario"] = st.text_input("Beneficiario", d.get("beneficiario") or "")
+    d["iban"] = st.text_input("IBAN", d.get("iban") or "")
     d["importo"] = st.number_input("Importo", value=float(d.get("importo") or 0))
     d["causale"] = st.text_input("Causale", d.get("causale") or "")
 
